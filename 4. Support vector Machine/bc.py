@@ -9,7 +9,7 @@ import joblib
 
 
 # Load the trained model
-model = joblib.load(r"C:\Users\Dickson\Desktop\ML project\4. Support vector Machine\breast_cancer_model.pkl")
+model = joblib.load("model.pkl")
 
 # Streamlit App Title
 st.title("Breast Cancer Prediction App")
