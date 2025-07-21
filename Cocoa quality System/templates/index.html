@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cocoa Bean Quality Detector</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- TailwindCSS CDN for easy styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .light-mode {
+            background-color: #f9fafb;
+            color: #1e293b;
+        }
+
+        .toggle-switch {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+
+        .upload-container {
+            margin-top: 5rem;
+        }
+    </style>
+</head>
+<body class="light-mode relative min-h-screen flex flex-col items-center justify-center font-sans">
+
+    <!-- Light/Dark mode toggle -->
+    <div class="toggle-switch">
+        <label class="inline-flex items-center cursor-pointer">
+            <span class="mr-2">🌞</span>
+            <input type="checkbox" id="mode-toggle" class="sr-only">
+            <div class="w-10 h-5 bg-gray-300 rounded-full shadow-inner"></div>
+            <span class="ml-2">🌚</span>
+        </label>
+    </div>
+
+    <h1 class="text-4xl font-bold text-center mb-4">Cocoa Bean Quality Detector</h1>
+
+    <div class="upload-container w-full max-w-xl p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md">
+        <form action="/predict" method="POST" enctype="multipart/form-data" class="flex flex-col space-y-4">
+            <input type="file" name="file" accept="image/*" required class="border p-2 rounded">
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Predict</button>
+        </form>
+
+        {% if uploaded %}
+            <h3>Prediction:</h3>
+            <img src="{{ image_path }}" alt="Prediction Result" style="max-width: 500px;">
+            <a href="{{ image_path }}" download>Download Result</a>
+        {% endif %}
+
+    </div>
+
+    <!-- Animated background -->
+    <canvas id="networkCanvas"></canvas>
+
+    <script>
+        // Light/Dark Mode Toggle
+        const toggle = document.getElementById('mode-toggle');
+        toggle.addEventListener('change', () => {
+            document.body.classList.toggle('dark-mode');
+            document.body.classList.toggle('light-mode');
+        });
+
+        // Neural Network Background Animation
+        const canvas = document.getElementById('networkCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let nodes = [];
+        for (let i = 0; i < 60; i++) {
+            nodes.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.8,
+                vy: (Math.random() - 0.5) * 0.8,
+                radius: Math.random() * 2 + 1
+            });
+        }
+
+        function drawNetwork() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < nodes.length; i++) {
+                let node = nodes[i];
+                node.x += node.vx;
+                node.y += node.vy;
+
+                if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+                if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
+                ctx.fillStyle = "#38bdf8";
+                ctx.fill();
+            }
+
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    let dx = nodes[i].x - nodes[j].x;
+                    let dy = nodes[i].y - nodes[j].y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(nodes[i].x, nodes[i].y);
+                        ctx.lineTo(nodes[j].x, nodes[j].y);
+                        ctx.strokeStyle = "rgba(56,189,248,0.2)";
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            requestAnimationFrame(drawNetwork);
+        }
+
+        drawNetwork();
+    </script>
+</body>
+</html>
